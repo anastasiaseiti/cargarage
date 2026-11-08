@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101619">
+  <meta name="author" content="Anastasia Seiti">
+  <meta property="og:title" content="APEX / Night Run | Created by Anastasia Seiti">
+  <meta property="og:description" content="An original arcade racing game created by Anastasia Seiti.">
+  <title>APEX / Night Run | Created by Anastasia Seiti</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root{color-scheme:dark;--ink:#f3f5ef;--muted:#9ba8a7;--lime:#d8ff3e;--cyan:#5be3dc;--orange:#ff7448;--panel:rgba(15,23,25,.82)}
+    *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101619;color:var(--ink)}
+    body{font-family:'DM Mono',monospace;letter-spacing:0}
+    button{font:inherit;color:inherit;letter-spacing:0}
+    #game{position:relative;width:100%;height:100%;min-height:500px;overflow:hidden;background:#111b20}
+    canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+    .vignette{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(8,15,18,.62),transparent 25%,transparent 60%,rgba(8,15,18,.35)),linear-gradient(90deg,rgba(5,12,16,.22),transparent 25%,transparent 75%,rgba(5,12,16,.22));}
+    .topbar{position:absolute;top:0;left:0;right:0;height:76px;padding:0 4.2vw;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.13);background:linear-gradient(180deg,rgba(9,16,19,.68),transparent)}
+    .brand{display:flex;align-items:center;gap:12px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:23px;letter-spacing:1px}.brand-mark{width:28px;height:28px;border:2px solid var(--lime);transform:skew(-17deg);display:grid;place-items:center;color:var(--lime);font-size:15px}
+    .brand small{font:10px 'DM Mono',monospace;color:#abb5b3;letter-spacing:2px;margin-left:4px}
+    .event-label{font-size:10px;letter-spacing:2px;color:#c3cecb}.event-label b{color:var(--lime);font-weight:500}
+    .top-right{display:flex;align-items:center;gap:24px;font-size:10px;color:#c3cecb;letter-spacing:1px}.sound{border:0;background:transparent;color:inherit;cursor:pointer;padding:8px}.sound:hover{color:var(--lime)}
+    .race-hud{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .3s}.race-hud.active{opacity:1}
+    .race-left{position:absolute;top:105px;left:4.2vw}.position{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:60px;line-height:.8;letter-spacing:-1px}.position span{font-size:23px;color:var(--lime);vertical-align:top;margin-left:2px}.race-label{font-size:9px;color:#b1bfbd;letter-spacing:2px;margin-top:12px}
+    .timer-box{margin-top:31px}.timer{font:22px 'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1px}.timer-label{font-size:9px;color:#94a19f;letter-spacing:1.6px;margin-top:3px}
+    .race-right{position:absolute;right:4.2vw;top:102px;text-align:right}.speed{font:900 78px/.78 'Barlow Condensed',sans-serif;letter-spacing:-2px}.speed-unit{color:var(--lime);font-size:12px;letter-spacing:2px;margin-top:9px}.gear{margin-top:22px;font-size:10px;letter-spacing:1.5px;color:#b8c2c0}.gear strong{font:700 22px 'Barlow Condensed',sans-serif;color:var(--ink);margin-left:7px}
+    .race-bottom{position:absolute;left:50%;bottom:35px;transform:translateX(-50%);width:min(430px,48vw);text-align:center}.progress-copy{display:flex;justify-content:space-between;font-size:9px;letter-spacing:1px;margin-bottom:8px}.progress-copy span:last-child{color:var(--lime)}.progress-track{height:3px;background:rgba(255,255,255,.25)}.progress-fill{height:100%;width:0;background:var(--lime);box-shadow:0 0 12px rgba(216,255,62,.7);transition:width .12s linear}.boost-row{display:flex;align-items:center;gap:10px;margin-top:15px}.boost-name{font-size:9px;letter-spacing:1.4px;color:#d0d8d6}.boost-track{flex:1;height:6px;border:1px solid rgba(255,255,255,.5);transform:skew(-20deg)}.boost-fill{height:100%;width:100%;background:var(--cyan);box-shadow:0 0 10px rgba(91,227,220,.75);transition:width .12s}.boost-hint{font-size:9px;color:#aab8b6;letter-spacing:1px}
+    .drift-badge{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) skew(-8deg);font:800 30px 'Barlow Condensed',sans-serif;color:var(--lime);text-shadow:0 2px 20px #000;opacity:0;transition:opacity .15s}.drift-badge.on{opacity:1}.toast{position:absolute;left:50%;top:37%;transform:translateX(-50%);font-size:10px;letter-spacing:2px;color:#fff;text-shadow:0 2px 8px #000;opacity:0;transition:opacity .2s}.toast.on{opacity:1}
+    .panel{position:absolute;left:50%;top:50%;transform:translate(-50%,-48%);width:min(580px,calc(100% - 32px));max-height:calc(100dvh - 24px);overflow-y:auto;background:var(--panel);border:1px solid rgba(255,255,255,.2);backdrop-filter:blur(16px);padding:30px 34px 26px;box-shadow:0 22px 100px rgba(0,0,0,.42);transition:opacity .25s,transform .25s}.panel.hidden{opacity:0;pointer-events:none;transform:translate(-50%,-44%)}
+    .eyebrow{font-size:9px;color:var(--lime);letter-spacing:2px}.panel h1{font:900 clamp(42px,8vw,68px)/.84 'Barlow Condensed',sans-serif;margin:12px 0 7px;letter-spacing:0}.panel h1 em{font-style:normal;color:var(--lime)}.subline{font-size:10px;color:#aab7b5;letter-spacing:1px}.creator-credit{margin-top:10px;color:#c2ccca;font-size:9px;letter-spacing:.7px}.creator-credit strong{color:var(--lime);font-weight:500}
+    .section-title{display:flex;align-items:center;gap:12px;margin:27px 0 11px;font-size:9px;letter-spacing:1.8px;color:#aab7b5}.section-title:after{content:'';height:1px;background:rgba(255,255,255,.17);flex:1}
+    .cars{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.car-choice{position:relative;text-align:left;background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.15);padding:12px 11px 10px;cursor:pointer;min-width:0;transition:background .15s,border-color .15s}.car-choice:hover{background:rgba(255,255,255,.09)}.car-choice.selected{border-color:var(--lime);background:rgba(216,255,62,.07)}.car-swatch{height:3px;width:25px;margin-bottom:12px}.car-name{font:700 16px 'Barlow Condensed',sans-serif;white-space:nowrap}.car-class{font-size:8px;color:#9eaaa9;letter-spacing:1px;margin-top:3px}.stat{display:grid;grid-template-columns:45px 1fr;align-items:center;gap:7px;margin-top:10px;font-size:7px;color:#a6b0af}.stat-track{height:2px;background:rgba(255,255,255,.18)}.stat-fill{height:100%;background:var(--cyan)}
+    .panel-footer{display:flex;align-items:center;justify-content:space-between;margin-top:22px;gap:12px}.keys{font-size:8px;color:#9daaa8;line-height:1.8;letter-spacing:.5px}.keys strong{color:#e8efeb;font-weight:500}.primary{border:0;background:var(--lime);color:#121817;padding:14px 22px;font:800 14px 'Barlow Condensed',sans-serif;letter-spacing:1px;cursor:pointer;clip-path:polygon(0 0,100% 0,100% 72%,90% 100%,0 100%);min-width:160px;transition:filter .15s,transform .15s}.primary:hover{filter:brightness(1.12);transform:translateY(-2px)}.primary:active{transform:translateY(0)}
+    .result{display:none}.result.show{display:block}.setup.hide{display:none}.result-stats{display:grid;grid-template-columns:repeat(3,1fr);margin:26px 0;border-top:1px solid rgba(255,255,255,.18);border-bottom:1px solid rgba(255,255,255,.18)}.result-stats div{padding:14px 0}.result-stats div+div{border-left:1px solid rgba(255,255,255,.15);padding-left:17px}.result-stats span{display:block;font:700 26px 'Barlow Condensed',sans-serif}.result-stats small{font-size:8px;letter-spacing:1px;color:#aab7b5}
+    .skin-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.skin-card{min-width:0;text-align:left;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.15);padding:10px 9px;cursor:pointer;transition:background .15s,border-color .15s}.skin-card:hover{background:rgba(255,255,255,.09)}.skin-card.equipped{border-color:var(--lime);background:rgba(216,255,62,.06)}.skin-preview{height:25px;margin-bottom:8px;position:relative;overflow:hidden;background:linear-gradient(110deg,var(--skin-color),#172124 75%)}.skin-preview:after{content:'';position:absolute;top:-9px;right:26%;width:7px;height:45px;transform:rotate(28deg);background:var(--skin-accent);box-shadow:12px 0 var(--skin-accent)}.skin-name{font:700 14px 'Barlow Condensed',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.skin-detail{font-size:7px;color:#aab7b5;letter-spacing:.7px;margin-top:3px}.skin-action{display:block;margin-top:9px;color:var(--lime);font-size:8px;letter-spacing:.8px}.skin-card:not(.owned) .skin-action{color:#e4e9e3}.store-status{min-height:12px;margin-top:8px;color:#aab7b5;font-size:8px;letter-spacing:.5px}.store-status.error{color:#ff987d}.store-status.success{color:var(--lime)}
+    .touch-controls{display:none;position:absolute;bottom:25px;left:5vw;right:5vw;justify-content:space-between;pointer-events:none}.touch-group{display:flex;gap:10px}.touch-btn{width:58px;height:58px;border:1px solid rgba(255,255,255,.45);background:rgba(13,20,22,.45);color:#fff;font-size:20px;pointer-events:auto;touch-action:none;user-select:none}.touch-btn:active,.touch-btn.down{background:rgba(216,255,62,.26);border-color:var(--lime)}.touch-btn.boost{color:var(--lime);font-size:10px;letter-spacing:1px;width:70px}
+    .pause-chip{position:absolute;top:86px;left:50%;transform:translateX(-50%);font-size:9px;letter-spacing:1.3px;color:#e3e9e7;opacity:0;pointer-events:none}.pause-chip.on{opacity:1}
+    @media(max-width:700px){.topbar{height:62px;padding:0 18px}.brand{font-size:19px}.brand small,.event-label{display:none}.top-right{gap:10px}.race-left{top:82px;left:18px}.race-right{top:82px;right:18px}.position{font-size:47px}.timer-box{margin-top:20px}.speed{font-size:63px}.gear{margin-top:14px}.race-bottom{bottom:22px;width:62vw}.panel{padding:25px 22px 21px}.touch-controls{display:flex}.race-hud.active~.touch-controls{display:flex}.drift-badge{top:54%}.toast{top:46%}}
+    @media(max-width:430px){.cars{gap:5px}.car-choice{padding:10px 7px}.car-name{font-size:14px}.stat{grid-template-columns:38px 1fr}.keys{max-width:125px;font-size:7px}.primary{min-width:140px;padding:13px 15px}.panel{padding:22px 17px 18px}.panel-footer{margin-top:17px}.section-title{margin-top:22px}.race-bottom{width:54vw;left:52%}.boost-name,.boost-hint{font-size:8px}}
+  </style>
+</head>
+<body>
+  <main id="game" aria-label="Apex Night Run arcade racing game">
+    <canvas id="scene" aria-label="Night-time coastal race track"></canvas>
+    <div class="vignette"></div>
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">A</span> APEX <small>RACING DIVISION</small></div>
+      <div class="event-label">COASTAL SERIES <b>/</b> EVENT 04</div>
+      <div class="top-right"><span>PORT AZURE · 02:14 AM</span><button class="sound" id="soundBtn" aria-label="Toggle soundtrack and sound effects" title="Toggle soundtrack and sound effects">♪</button></div>
+    </header>
+    <section class="race-hud" id="raceHud" aria-live="polite">
+      <div class="race-left"><div class="position" id="position">04<span>TH</span></div><div class="race-label">POSITION</div><div class="timer-box"><div class="timer" id="timer">00:00.0</div><div class="timer-label">RACE TIME</div></div></div>
+      <div class="race-right"><div class="speed" id="speed">000</div><div class="speed-unit">KM/H</div><div class="gear">GEAR <strong id="gear">1</strong></div></div>
+      <div class="race-bottom"><div class="progress-copy"><span>PORT AZURE COASTLINE</span><span id="distanceLabel">0.0 / 3.2 KM</span></div><div class="progress-track"><div class="progress-fill" id="progress"></div></div><div class="boost-row"><span class="boost-name">NITRO</span><div class="boost-track"><div class="boost-fill" id="nitroFill"></div></div><span class="boost-hint">SPACE</span></div></div>
+      <div class="drift-badge" id="driftBadge">+0</div><div class="toast" id="toast">PERFECT DRIFT</div>
+    </section>
+    <div class="pause-chip" id="pauseChip">PAUSED · PRESS P TO RESUME</div>
+    <div class="touch-controls" id="touchControls">
+      <div class="touch-group"><button class="touch-btn" data-key="ArrowLeft" aria-label="Steer left">‹</button><button class="touch-btn" data-key="ArrowRight" aria-label="Steer right">›</button></div>
+      <div class="touch-group"><button class="touch-btn" data-key="Space" aria-label="Nitro boost" class="boost">N₂O</button><button class="touch-btn" data-key="ArrowUp" aria-label="Accelerate">▲</button></div>
+    </div>
+    <section class="panel" id="panel">
+      <div class="setup" id="setup">
+        <div class="eyebrow">NIGHT RUN // PORT AZURE</div><h1>OWN THE<br><em>COAST.</em></h1><div class="subline">3.2 KM · 4 DRIVERS · ONE WAY THROUGH</div><div class="creator-credit">Created by <strong>Anastasia Seiti</strong></div>
+        <div class="section-title">SELECT YOUR MACHINE</div>
+        <div class="cars" id="cars"></div>
+        <div class="section-title">AFTERMARKET SKINS · USD 4.99</div>
+        <div class="skin-grid" id="skinStore"></div>
+        <div class="store-status" id="storeStatus" role="status">SKIN CHECKOUT REQUIRES FULL SERVER HOSTING</div>
+        <div class="panel-footer"><div class="keys"><strong>← →</strong> STEER &nbsp; <strong>↑</strong> THROTTLE<br><strong>SPACE</strong> NITRO &nbsp; <strong>SHIFT</strong> DRIFT</div><button class="primary" id="startBtn">START RACE&nbsp; ↗</button></div>
+      </div>
+      <div class="result" id="result"><div class="eyebrow" id="resultEyebrow">CHECKERED FLAG</div><h1 id="resultTitle">NICE<br><em>DRIVE.</em></h1><div class="subline" id="resultSubtitle">THE COAST REMEMBERS.</div><div class="result-stats"><div><span id="resultTime">00:00</span><small>RACE TIME</small></div><div><span id="resultPlace">04TH</span><small>FINISH</small></div><div><span id="resultScore">0000</span><small>DRIFT SCORE</small></div></div><div class="panel-footer"><div class="keys">YOUR NEXT RUN STARTS HERE.</div><button class="primary" id="againBtn">RACE AGAIN&nbsp; ↗</button></div></div>
+    </section>
+  </main>
+<script>
+(() => {
+  'use strict';
+  const canvas = document.getElementById('scene');
+  const ctx = canvas.getContext('2d');
+  const ui = Object.fromEntries(['panel','setup','result','raceHud','startBtn','againBtn','cars','skinStore','storeStatus','position','timer','speed','gear','progress','distanceLabel','nitroFill','driftBadge','toast','pauseChip','resultEyebrow','resultTitle','resultSubtitle','resultTime','resultPlace','resultScore','soundBtn'].map(id => [id, document.getElementById(id)]));
+  const cars = [
+    {name:'VOLT S',type:'ELECTRIC / S',color:'#d8ff3e',speed:0.72,grip:0.68,boost:0.76,shape:0},
+    {name:'RAVEN GT',type:'COUPE / A',color:'#ff654c',speed:0.86,grip:0.58,boost:0.62,shape:1},
+    {name:'TIDELINE R',type:'SPORT / S',color:'#5be3dc',speed:0.76,grip:0.9,boost:0.84,shape:2}
+  ];
+  const skins = [
+    {id:'prism-shift',name:'PRISM SHIFT',detail:'CHROMA / DOUBLE STRIPE',color:'#f25469',accent:'#f6d85b',pattern:'double'},
+    {id:'abyssal',name:'ABYSSAL',detail:'DEEP SEA / CIRCUIT',color:'#32b8c2',accent:'#c9ffef',pattern:'circuit'},
+    {id:'solar-flare',name:'SOLAR FLARE',detail:'ION / SLASH MARKS',color:'#ff9a45',accent:'#f5e6bf',pattern:'slash'}
+  ];
+  const validSkinIds = new Set(skins.map(skin => skin.id));
+  let ownedSkins = new Set();
+  try { ownedSkins = new Set(JSON.parse(localStorage.getItem('apex.ownedSkins') || '[]').filter(id => validSkinIds.has(id))); } catch (_) {}
+  let equippedSkin = localStorage.getItem('apex.equippedSkin');
+  if (!ownedSkins.has(equippedSkin)) equippedSkin = null;
+  let selected = 0, running = false, paused = false, finished = false, muted = true;
+  let W = 0, H = 0, dpr = 1, last = 0, elapsed = 0, distance = 0, speed = 0, nitro = 1, driftScore = 0, driftTime = 0, playerX = 0, steer = 0, shake = 0;
+  const totalDistance = 3200, keys = new Set(), rivals = [], particles = [];
+  let audio = null, musicTimer = null;
+
+  function resize(){
+    const rect = canvas.getBoundingClientRect(); dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = rect.width; H = rect.height; canvas.width = Math.round(W*dpr); canvas.height = Math.round(H*dpr); ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  window.addEventListener('resize', resize); resize();
+  function makeCars(){
+    ui.cars.innerHTML = '';
+    cars.forEach((car,i) => {
+      const button = document.createElement('button'); button.className = `car-choice${i===selected?' selected':''}`; button.type = 'button'; button.setAttribute('aria-pressed',i===selected);
+      button.innerHTML = `<div class="car-swatch" style="background:${car.color}"></div><div class="car-name">${car.name}</div><div class="car-class">${car.type}</div><div class="stat"><span>TOP SPD</span><div class="stat-track"><div class="stat-fill" style="width:${car.speed*100}%"></div></div></div><div class="stat"><span>HANDLING</span><div class="stat-track"><div class="stat-fill" style="width:${car.grip*100}%"></div></div></div>`;
+      button.addEventListener('click', () => { selected=i; makeCars(); }); ui.cars.append(button);
+    });
+  }
+  function renderStore(){
+    ui.skinStore.innerHTML = '';
+    for (const skin of skins) {
+      const owned = ownedSkins.has(skin.id);
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = `skin-card${owned ? ' owned' : ''}${equippedSkin === skin.id ? ' equipped' : ''}`;
+      button.setAttribute('aria-pressed', equippedSkin === skin.id);
+      button.innerHTML = `<div class="skin-preview" style="--skin-color:${skin.color};--skin-accent:${skin.accent}"></div><div class="skin-name">${skin.name}</div><div class="skin-detail">${skin.detail}</div><span class="skin-action">${owned ? equippedSkin === skin.id ? 'EQUIPPED' : 'EQUIP SKIN' : 'BUY · $4.99'}</span>`;
+      button.addEventListener('click', () => owned ? equipSkin(skin.id) : buySkin(skin.id));
+      ui.skinStore.append(button);
+    }
+  }
+  function equipSkin(skinId){
+    if (!ownedSkins.has(skinId)) return;
+    equippedSkin = skinId;
+    localStorage.setItem('apex.equippedSkin', skinId);
+    renderStore();
+  }
+  async function buySkin(skinId){
+    ui.storeStatus.className = 'store-status';
+    ui.storeStatus.textContent = 'OPENING SECURE CHECKOUT...';
+    try {
+      const response = await fetch('/api/create-checkout-session', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({skinId})});
+      if (!response.headers.get('content-type')?.includes('application/json')) {
+        throw new Error('Skin purchases require full server hosting. No payment was made.');
+      }
+      const result = await response.json();
+      if (!response.ok || !result.url) throw new Error(result.error || 'Checkout is unavailable.');
+      window.location.assign(result.url);
+    } catch (error) {
+      ui.storeStatus.classList.add('error');
+      ui.storeStatus.textContent = error.message || 'Could not reach checkout. Start the game server and configure Stripe.';
+    }
+  }
+  async function verifyPurchaseReturn(){
+    const params = new URLSearchParams(window.location.search);
+    const purchase = params.get('purchase');
+    if (purchase === 'cancelled') {
+      ui.storeStatus.textContent = 'CHECKOUT CANCELLED · NO CHARGE MADE';
+      window.history.replaceState({}, '', window.location.pathname);
+      return;
+    }
+    if (purchase !== 'success') return;
+    const sessionId = params.get('session_id');
+    ui.storeStatus.textContent = 'VERIFYING PAYMENT...';
+    try {
+      if (!sessionId) throw new Error('No checkout session was returned.');
+      const response = await fetch(`/api/verify-session?session_id=${encodeURIComponent(sessionId)}`);
+      const result = await response.json();
+      if (!response.ok || !validSkinIds.has(result.skinId)) throw new Error(result.error || 'Payment could not be verified.');
+      ownedSkins.add(result.skinId);
+      localStorage.setItem('apex.ownedSkins', JSON.stringify([...ownedSkins]));
+      equipSkin(result.skinId);
+      ui.storeStatus.className = 'store-status success';
+      ui.storeStatus.textContent = `${skins.find(skin => skin.id === result.skinId).name} UNLOCKED · EQUIPPED`;
+    } catch (error) {
+      ui.storeStatus.className = 'store-status error';
+      ui.storeStatus.textContent = error.message || 'Payment verification failed. Contact support before trying again.';
+    } finally {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }
+  makeCars();
+  renderStore();
+  verifyPurchaseReturn();
+  const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+  const lerp=(a,b,t)=>a+(b-a)*t;
+  const curveAt = z => Math.sin(z*.00165)*.54 + Math.sin(z*.00063+1.6)*.33 + Math.sin(z*.0031+.4)*.11;
+  const roadY = () => H*.39;
+
+  function drawBackground(t){
+    const horizon=roadY();
+    const sky=ctx.createLinearGradient(0,0,0,H); sky.addColorStop(0,'#14212a');sky.addColorStop(.52,'#41585a');sky.addColorStop(.77,'#b07558');sky.addColorStop(1,'#182326');ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+    const sunX=W*.72,sunY=horizon*.63;
+    const glow=ctx.createRadialGradient(sunX,sunY,2,sunX,sunY,W*.22);glow.addColorStop(0,'rgba(255,197,135,.45)');glow.addColorStop(1,'rgba(255,145,100,0)');ctx.fillStyle=glow;ctx.fillRect(0,0,W,H*.62);
+    ctx.fillStyle='#25383b';ctx.beginPath();ctx.moveTo(0,horizon*.97);for(let x=0;x<=W;x+=W/12){let y=horizon*(.72+Math.sin(x*.007+1)*.12+Math.sin(x*.018)*.035);ctx.lineTo(x,y);}ctx.lineTo(W,horizon);ctx.lineTo(0,horizon);ctx.fill();
+    ctx.fillStyle='#1b2c31';ctx.beginPath();ctx.moveTo(0,horizon*1.08);for(let x=0;x<=W;x+=W/15){let y=horizon*(.9+Math.sin(x*.009+2)*.13);ctx.lineTo(x,y);}ctx.lineTo(W,horizon*1.2);ctx.lineTo(0,horizon*1.2);ctx.fill();
+    // Harbor silhouettes and warm windows anchor the coastline.
+    for(let i=0;i<32;i++){const x=((i*97+W*.03)%W),base=horizon*(.99+(i%3)*.035),bw=12+(i*13)%28,bh=10+(i*19)%37;ctx.fillStyle=i%4===0?'#344247':'#26363a';ctx.fillRect(x,base-bh,bw,bh);if(i%3===0){ctx.strokeStyle='rgba(255,180,112,.45)';ctx.lineWidth=1;for(let wy=base-bh+5;wy<base-3;wy+=8)ctx.beginPath(),ctx.moveTo(x+4,wy),ctx.lineTo(x+bw-4,wy),ctx.stroke();}}
+    ctx.fillStyle='#10191d';ctx.fillRect(0,horizon,W,H-horizon);
+    // distant coast lights
+    for(let i=0;i<26;i++){let x=(i*83+21)%W,y=horizon+(i*17%Math.max(20,H-horizon));ctx.fillStyle=i%3===0?'rgba(255,182,117,.55)':'rgba(102,211,197,.3)';ctx.fillRect(x,y,1.5,1.5);}
+  }
+  function roadCenter(y, z){const p=(y-roadY())/(H-roadY());return W*.5 + curveAt(z)*W*.34*p*p;}
+  function drawRoad(){
+    const horizon=roadY(),bottom=H,segments=72,visible=1700,offset=distance*1.35;
+    for(let i=0;i<segments;i++){
+      const p1=i/segments,p2=(i+1)/segments;
+      const y1=horizon+(bottom-horizon)*p1*p1,y2=horizon+(bottom-horizon)*p2*p2;
+      const z=offset+(1-p1)*visible, c1=roadCenter(y1,z),c2=roadCenter(y2,z-visible/segments);
+      const half1=lerp(W*.035,W*.47,p1),half2=lerp(W*.035,W*.47,p2);
+      const stripe=Math.floor((z+distance*.2)/70)%2;
+      ctx.fillStyle=stripe?'#233538':'#293b3e';ctx.fillRect(0,y1,W,y2-y1+1);
+      // Shoulder, asphalt, edge paint, and lane dashes.
+      ctx.fillStyle=stripe?'#b8b59b':'#d7c6a4';ctx.beginPath();ctx.moveTo(c1-half1*1.12,y1);ctx.lineTo(c1+half1*1.12,y1);ctx.lineTo(c2+half2*1.12,y2);ctx.lineTo(c2-half2*1.12,y2);ctx.fill();
+      ctx.fillStyle=stripe?'#394247':'#303a3e';ctx.beginPath();ctx.moveTo(c1-half1,y1);ctx.lineTo(c1+half1,y1);ctx.lineTo(c2+half2,y2);ctx.lineTo(c2-half2,y2);ctx.fill();
+      ctx.fillStyle='rgba(231,231,211,.62)';const edgeW=Math.max(1,W*.003*p2);ctx.fillRect(c1-half1,y1,edgeW,y2-y1+1);ctx.fillRect(c1+half1-edgeW,y1,edgeW,y2-y1+1);
+      if(Math.floor(z/115)%2===0){ctx.fillStyle='rgba(219,226,210,.48)';const laneW=Math.max(1,W*.003*p2);ctx.fillRect(c1-half1/3-laneW/2,y1,laneW,y2-y1+1);ctx.fillRect(c1+half1/3-laneW/2,y1,laneW,y2-y1+1);}
+      // Reflective roadside stakes.
+      if(i%7===0&&p2>.12){const postH=3+28*p2;ctx.fillStyle='#d5d0b1';ctx.fillRect(c2-half2*1.1-postH*.15,y2-postH,Math.max(1,postH*.13),postH);ctx.fillRect(c2+half2*1.1,y2-postH,Math.max(1,postH*.13),postH);ctx.fillStyle='rgba(255,119,78,.75)';ctx.fillRect(c2-half2*1.1-postH*.15,y2-postH,Math.max(1,postH*.13),postH*.24);ctx.fillRect(c2+half2*1.1,y2-postH,Math.max(1,postH*.13),postH*.24);}
+    }
+  }
+  function carShape(x,y,w,h,color,player=false,shape=0){
+    ctx.save();ctx.translate(x,y);
+    if(player&&shake>0){ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);}
+    // grounded shadow
+    ctx.fillStyle='rgba(0,0,0,.55)';ctx.beginPath();ctx.ellipse(0,h*.36,w*.68,h*.18,0,0,Math.PI*2);ctx.fill();
+    if(player&&keys.has('Space')&&nitro>0){ctx.fillStyle='#66f2e6';ctx.shadowColor='#69fff0';ctx.shadowBlur=18;ctx.beginPath();ctx.moveTo(-w*.19,h*.32);ctx.lineTo(-w*.12,h*.8+Math.random()*h*.18);ctx.lineTo(-w*.04,h*.31);ctx.fill();ctx.beginPath();ctx.moveTo(w*.04,h*.31);ctx.lineTo(w*.13,h*.8+Math.random()*h*.18);ctx.lineTo(w*.2,h*.31);ctx.fill();ctx.shadowBlur=0;}
+    // wheels
+    ctx.fillStyle='#0b1012';ctx.fillRect(-w*.47,-h*.08,w*.15,h*.37);ctx.fillRect(w*.32,-h*.08,w*.15,h*.37);ctx.fillRect(-w*.44,h*.37,w*.14,h*.27);ctx.fillRect(w*.3,h*.37,w*.14,h*.27);
+    const body=ctx.createLinearGradient(-w/2,0,w/2,0);body.addColorStop(0,'#182024');body.addColorStop(.2,color);body.addColorStop(.75,color);body.addColorStop(1,'#141a1d');
+    ctx.fillStyle=body;ctx.beginPath();ctx.moveTo(-w*.35,h*.48);ctx.lineTo(-w*.48,h*.16);ctx.lineTo(-w*.38,-h*.22);ctx.lineTo(-w*.25,-h*.42);ctx.quadraticCurveTo(0,-h*.51,w*.25,-h*.42);ctx.lineTo(w*.38,-h*.22);ctx.lineTo(w*.48,h*.16);ctx.lineTo(w*.35,h*.48);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#17282e';ctx.beginPath();ctx.moveTo(-w*.28,-h*.19);ctx.lineTo(-w*.19,-h*.36);ctx.quadraticCurveTo(0,-h*.42,w*.19,-h*.36);ctx.lineTo(w*.28,-h*.19);ctx.lineTo(w*.3,h*.02);ctx.lineTo(-w*.3,h*.02);ctx.closePath();ctx.fill();
+    ctx.fillStyle='rgba(185,235,229,.23)';ctx.beginPath();ctx.moveTo(-w*.24,-h*.19);ctx.lineTo(-w*.16,-h*.34);ctx.lineTo(0,-h*.37);ctx.lineTo(0,-h*.19);ctx.fill();
+    ctx.fillStyle='rgba(242,247,233,.72)';ctx.fillRect(-w*.31,h*.02,w*.62,h*.025);
+    ctx.fillStyle=player?'#fff5cf':'#ff5949';ctx.shadowColor=player?'#fff':'#ff3427';ctx.shadowBlur=player?8:4;ctx.fillRect(-w*.34,h*.34,w*.19,h*.07);ctx.fillRect(w*.15,h*.34,w*.19,h*.07);ctx.shadowBlur=0;
+    if(shape===1){ctx.fillStyle='#151b1e';ctx.fillRect(-w*.25,-h*.46,w*.5,h*.04);}if(shape===2){ctx.fillStyle=color;ctx.fillRect(-w*.42,h*.09,w*.84,h*.035);}
+    ctx.restore();
+  }
+  function drawRoadside(){
+    const horizon=roadY();
+    for(let i=0;i<18;i++){
+      const p=((i/18+((distance*.00065)%1))%1);const y=horizon+(H-horizon)*p*p;const z=distance+(1-p)*1600;const side=i%2?1:-1;const center=roadCenter(y,z);const half=lerp(W*.035,W*.47,p);const x=center+side*(half+lerp(8,W*.22,p));const size=lerp(2,34,p);
+      if(i%3===0){ctx.fillStyle='#172a2c';ctx.beginPath();ctx.moveTo(x-size*.55,y);ctx.lineTo(x,y-size*1.65);ctx.lineTo(x+size*.6,y);ctx.fill();ctx.fillStyle='#334a48';ctx.beginPath();ctx.moveTo(x-size*.4,y-size*.5);ctx.lineTo(x,y-size*1.55);ctx.lineTo(x+size*.3,y-size*.5);ctx.fill();ctx.fillStyle='#57483c';ctx.fillRect(x-size*.08,y-size*.23,size*.16,size*.25);}else{ctx.fillStyle='rgba(255,178,109,.75)';ctx.beginPath();ctx.arc(x,y-size*.3,Math.max(1,size*.09),0,Math.PI*2);ctx.fill();ctx.fillStyle='rgba(255,150,90,.16)';ctx.beginPath();ctx.arc(x,y-size*.3,size*.36,0,Math.PI*2);ctx.fill();}
+    }
+  }
+  function drawRivals(){
+    for(const rival of rivals){let rel=rival.dist-distance;if(rel<0||rel>1550)continue;let p=1-rel/1550;let y=roadY()+(H-roadY())*p*p;let z=rival.dist;let center=roadCenter(y,z);let half=lerp(W*.035,W*.47,p);let x=center+rival.lane*half*.72;let scale=lerp(.13,1.1,p);carShape(x,y,48*scale,86*scale,rival.color,false,rival.shape);}
+  }
+  function drawPlayer(){
+    const y=H*.84;const p=(y-roadY())/(H-roadY());const center=roadCenter(y,distance);const half=lerp(W*.035,W*.47,p);const x=center+playerX*half*.75;const bounce=Math.sin(elapsed*22)*Math.min(speed/320,1)*3.2;
+    if(Math.abs(playerX)>.76&&speed>90){ctx.fillStyle='rgba(226,224,202,.7)';for(let i=0;i<4;i++){let sx=x+(Math.random()-.5)*80,sy=y+Math.random()*28;ctx.fillRect(sx,sy,2+Math.random()*3,2+Math.random()*3);}}
+    if(speed>90){ctx.strokeStyle=`rgba(228,248,241,${Math.min(.25,(speed-90)/1000)})`;ctx.lineWidth=2;for(let i=0;i<10;i++){let sx=x+(Math.random()-.5)*W*.72;ctx.beginPath();ctx.moveTo(sx,y-35-Math.random()*100);ctx.lineTo(sx+(sx-x)*.12,y+30+Math.random()*75);ctx.stroke();}}
+    ctx.save();ctx.translate(x,y+bounce);ctx.rotate(-steer*.07);carShape(0,0,Math.min(96,W*.13),Math.min(162,H*.25),cars[selected].color,true,cars[selected].shape);ctx.restore();
+  }
+  function draw(t){
+    ctx.clearRect(0,0,W,H);drawBackground(t);drawRoad();drawRoadside();drawRivals();
+    if(running)drawPlayer();
+    if(paused){ctx.fillStyle='rgba(5,10,12,.32)';ctx.fillRect(0,0,W,H);}
+    if(finished){drawPlayer();}
+  }
+  function midiFrequency(note){return 440*Math.pow(2,(note-69)/12);}
+  function synthNote(note,duration,type,volume){
+    if(!audio||muted)return;
+    const now=audio.currentTime,osc=audio.createOscillator(),gain=audio.createGain();
+    osc.type=type;osc.frequency.setValueAtTime(midiFrequency(note),now);
+    gain.gain.setValueAtTime(.001,now);gain.gain.exponentialRampToValueAtTime(volume,now+.012);gain.gain.exponentialRampToValueAtTime(.001,now+duration);
+    osc.connect(gain);gain.connect(audio.destination);osc.start(now);osc.stop(now+duration+.02);
+  }
+  function synthViolin(note,duration,volume){
+    if(!audio||muted)return;
+    const now=audio.currentTime,lead=audio.createOscillator(),double=audio.createOscillator(),filter=audio.createBiquadFilter(),gain=audio.createGain(),vibrato=audio.createOscillator(),depth=audio.createGain();
+    const frequency=midiFrequency(note);
+    lead.type='sawtooth';lead.frequency.setValueAtTime(frequency,now);lead.detune.value=-4;
+    double.type='sawtooth';double.frequency.setValueAtTime(frequency,now);double.detune.value=4;
+    filter.type='lowpass';filter.frequency.value=2800;filter.Q.value=.7;
+    gain.gain.setValueAtTime(.001,now);gain.gain.linearRampToValueAtTime(volume,now+.05);gain.gain.setValueAtTime(volume*.72,now+duration*.72);gain.gain.exponentialRampToValueAtTime(.001,now+duration);
+    vibrato.type='sine';vibrato.frequency.value=5.2;depth.gain.value=11;vibrato.connect(depth);depth.connect(lead.detune);depth.connect(double.detune);
+    lead.connect(filter);double.connect(filter);filter.connect(gain);gain.connect(audio.destination);
+    lead.start(now);double.start(now);vibrato.start(now);lead.stop(now+duration+.02);double.stop(now+duration+.02);vibrato.stop(now+duration+.02);
+  }
+  function synthBass(note){synthNote(note,.34,'triangle',.065);synthNote(note-12,.34,'sine',.075);}
+  function synthKick(){
+    if(!audio||muted)return;
+    const now=audio.currentTime,osc=audio.createOscillator(),gain=audio.createGain();
+    osc.type='sine';osc.frequency.setValueAtTime(130,now);osc.frequency.exponentialRampToValueAtTime(42,now+.13);
+    gain.gain.setValueAtTime(.12,now);gain.gain.exponentialRampToValueAtTime(.001,now+.15);
+    osc.connect(gain);gain.connect(audio.destination);osc.start(now);osc.stop(now+.16);
+  }
+  function synthSnare(){
+    if(!audio||muted)return;
+    const now=audio.currentTime,length=Math.floor(audio.sampleRate*.11),buffer=audio.createBuffer(1,length,audio.sampleRate),data=buffer.getChannelData(0);
+    for(let i=0;i<length;i++)data[i]=(Math.random()*2-1)*(1-i/length);
+    const source=audio.createBufferSource(),filter=audio.createBiquadFilter(),gain=audio.createGain();
+    source.buffer=buffer;filter.type='highpass';filter.frequency.value=1200;gain.gain.setValueAtTime(.055,now);gain.gain.exponentialRampToValueAtTime(.001,now+.11);
+    source.connect(filter);filter.connect(gain);gain.connect(audio.destination);source.start(now);source.stop(now+.12);
+  }
+  function startMusic(){
+    window.clearTimeout(musicTimer);
+    const melody=[76,79,83,86,83,79,76,74,76,81,84,88,86,84,81,79],roots=[40,40,36,36,38,38,35,35];
+    let step=0;
+    function tick(){
+      if(muted||!audio)return;
+      const beat=step%16;
+      if(step%4===0)synthBass(roots[Math.floor(step/4)%roots.length]);
+      if(step%8===0)synthKick();else if(step%8===4)synthSnare();
+      if(step%2===0)synthViolin(melody[Math.floor(step/2)],.24,.018);
+      step=(step+1)%32;
+      musicTimer=window.setTimeout(tick,60000/112/4*1000);
+    }
+    tick();
+  }
+  function playTone(freq,duration=.08,type='sine',volume=.035){if(muted)return;try{audio ||= new (window.AudioContext||window.webkitAudioContext)();const osc=audio.createOscillator(),gain=audio.createGain();osc.type=type;osc.frequency.value=freq;gain.gain.setValueAtTime(volume,audio.currentTime);gain.gain.exponentialRampToValueAtTime(.001,audio.currentTime+duration);osc.connect(gain);gain.connect(audio.destination);osc.start();osc.stop(audio.currentTime+duration);}catch(_){}}
+  function reset(){
+    running=true;paused=false;finished=false;elapsed=0;distance=0;speed=0;nitro=1;driftScore=0;driftTime=0;playerX=0;steer=0;shake=0;keys.clear();
+    const rivalGrid=[{dist:110,lane:-.42,factor:.72},{dist:200,lane:.36,factor:.8},{dist:300,lane:-.1,factor:.88},{dist:-120,lane:.18,factor:.78}];
+    const rivalBaseSpeed=205+cars[selected].speed*115;
+    rivals.length=0;rivalGrid.forEach((grid,i)=>rivals.push({...grid,color:['#e7e8df','#fe704e','#80c6d1','#c4a4ef'][i],shape:i%3,speed:rivalBaseSpeed*grid.factor}));
+    ui.panel.classList.add('hidden');ui.raceHud.classList.add('active');ui.pauseChip.classList.remove('on');ui.driftBadge.classList.remove('on');last=performance.now();
+  }
+  function formatTime(s){const m=Math.floor(s/60),sec=(s%60).toFixed(1).padStart(4,'0');return `${String(m).padStart(2,'0')}:${sec}`;}
+  function finish(){running=false;finished=true;ui.raceHud.classList.remove('active');ui.result.classList.add('show');ui.setup.classList.add('hide');const place=1+rivals.filter(r=>r.dist>distance).length;const won=place===1;ui.resultEyebrow.textContent=won?'CHECKERED FLAG // P1':'CHECKERED FLAG';ui.resultTitle.innerHTML=won?'COAST<br><em>CONQUERED.</em>':place===2?'PODIUM<br><em>FINISH.</em>':'NICE<br><em>DRIVE.</em>';ui.resultSubtitle.textContent=won?'PORT AZURE IS YOURS.':place<=3?'THAT WAS A CLOSE ONE.':'THE COAST REMEMBERS.';ui.resultTime.textContent=formatTime(elapsed);ui.resultPlace.textContent=`${place}${place===1?'ST':place===2?'ND':place===3?'RD':'TH'}`;ui.resultScore.textContent=String(driftScore).padStart(4,'0');ui.panel.classList.remove('hidden');playTone(won?760:430,.35,'triangle',.05);}
+  function updateHud(){ui.position.innerHTML=`${String(1+rivals.filter(r=>r.dist>distance).length).padStart(2,'0')}<span>TH</span>`;const place=1+rivals.filter(r=>r.dist>distance).length;ui.position.innerHTML=`${String(place).padStart(2,'0')}<span>${place===1?'ST':place===2?'ND':place===3?'RD':'TH'}</span>`;ui.timer.textContent=formatTime(elapsed);ui.speed.textContent=String(Math.round(speed)).padStart(3,'0');ui.gear.textContent=String(Math.min(6,Math.max(1,Math.floor(speed/44)+1)));ui.progress.style.width=`${Math.min(100,distance/totalDistance*100)}%`;ui.distanceLabel.textContent=`${(distance/1000).toFixed(1)} / 3.2 KM`;ui.nitroFill.style.width=`${nitro*100}%`;ui.driftBadge.textContent=`+${driftScore}`;}
+  function update(dt){
+    if(!running||paused)return;
+    elapsed+=dt;
+    const accelerating=keys.has('ArrowUp')||keys.has('KeyW'), braking=keys.has('ArrowDown')||keys.has('KeyS'), drifting=keys.has('ShiftLeft')||keys.has('ShiftRight');const boosting=keys.has('Space')&&nitro>.015;
+    const car=cars[selected];const maxSpeed=(205+car.speed*115)*(boosting?1.38:1);
+    speed+=((accelerating?maxSpeed:Math.max(95,maxSpeed*.55))-speed)*Math.min(1,dt*(accelerating?1.05:.24));if(braking)speed=Math.max(55,speed-dt*180);
+    if(boosting){nitro=Math.max(0,nitro-dt*.24);speed+=dt*70;}
+    else nitro=Math.min(1,nitro+dt*(drifting?.095:.027));
+    steer=(keys.has('ArrowLeft')||keys.has('KeyA')?-1:0)+(keys.has('ArrowRight')||keys.has('KeyD')?1:0);
+    const handling=car.grip*(drifting?.56:1);playerX+=steer*dt*(1.15+speed/220)*handling;playerX-=curveAt(distance)*dt*(speed/400)*.16;playerX=clamp(playerX,-1.34,1.34);
+    distance+=speed*dt*.54;
+    for(const rival of rivals){rival.dist+=rival.speed*dt*.54;if(rival.dist>distance-65&&rival.dist<distance+100&&Math.abs(rival.lane-playerX)<.22){speed=Math.max(65,speed-105*dt);shake=Math.min(7,shake+dt*35);nitro=Math.max(0,nitro-.14);if(Math.random()<dt*2)playTone(110,.08,'sawtooth',.025);}}
+    shake=Math.max(0,shake-dt*15);
+    if(drifting&&Math.abs(steer)>0&&speed>115){driftTime+=dt;driftScore+=Math.round(dt*speed*.16);ui.driftBadge.classList.add('on');if(driftTime>1.3&&Math.random()<dt*2.8){ui.toast.classList.add('on');setTimeout(()=>ui.toast.classList.remove('on'),700);}}
+    else{driftTime=0;ui.driftBadge.classList.remove('on');}
+    if(Math.abs(playerX)>1){speed=Math.max(70,speed-dt*95);nitro=Math.max(0,nitro-dt*.08);}
+    if(distance>=totalDistance){distance=totalDistance;finish();}
+    updateHud();
+  }
+  function frame(now){const dt=Math.min(.04,(now-last)/1000||0);last=now;update(dt);draw(now);requestAnimationFrame(frame);}
+  requestAnimationFrame(frame);
+  function setKey(code,down){if(down)keys.add(code);else keys.delete(code);}
+  window.addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();if(e.repeat)return;setKey(e.code,true);if(e.code==='KeyP'&&running){paused=!paused;ui.pauseChip.classList.toggle('on',paused);playTone(paused?280:480,.08);}if(e.code==='Escape'&&running){paused=!paused;ui.pauseChip.classList.toggle('on',paused);}});
+  window.addEventListener('keyup',e=>setKey(e.code,false));window.addEventListener('blur',()=>keys.clear());
+  document.querySelectorAll('.touch-btn').forEach(button=>{const code=button.dataset.key;const down=e=>{e.preventDefault();button.classList.add('down');setKey(code,true);button.setPointerCapture?.(e.pointerId);};const up=e=>{e.preventDefault();button.classList.remove('down');setKey(code,false);};button.addEventListener('pointerdown',down);button.addEventListener('pointerup',up);button.addEventListener('pointercancel',up);button.addEventListener('lostpointercapture',up);});
+  ui.startBtn.addEventListener('click',()=>{playTone(620,.12,'triangle');reset();});ui.againBtn.addEventListener('click',()=>{ui.result.classList.remove('show');ui.setup.classList.remove('hide');ui.panel.classList.remove('hidden');reset();});
+  ui.soundBtn.addEventListener('click',()=>{muted=!muted;ui.soundBtn.textContent=muted?'♪':'♫';ui.soundBtn.style.color=muted?'':'var(--lime)';if(muted){window.clearTimeout(musicTimer);return;}try{audio ||= new (window.AudioContext||window.webkitAudioContext)();audio.resume().then(()=>{playTone(660,.1);startMusic();});}catch(_){}});
+})();
+</script>
+</body>
+</html>
